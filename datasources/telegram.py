@@ -8,11 +8,9 @@ class Telegram:
     def __init__(self, input_path):
         self.input_telegram_path = os.path.join(input_path, 'telegram/')
 
-        self.parse_chat_files()
-
     def get_chat_files(self):
         def get_file_number(file_name):
-            re_number = re.findall(r'^messages([0-9]*).html', file_name)[0]
+            re_number = re.search(r'^messages(?P<number>[0-9]*).html', file_name).group('number')
             number = int(re_number) if re_number != '' else 0
 
             return number
@@ -47,7 +45,8 @@ class Telegram:
             # clean message fields
             if message['user']:
                 # can also match bots selecting the end
-                message['user'] = re.findall(r'^(.*?)( via @([a-zA-Z0-9_-]+))?$', message['user'].strip())[0][0]
+                message['user'] = re.search(
+                    r'^(?P<user>.*?)( via @(?P<bot>[a-zA-Z0-9_-]+))?$', message['user'].strip()).group('user')
                 last_user = message['user']
             else:
                 message['user'] = last_user
@@ -68,14 +67,13 @@ class Telegram:
 
         return message_list
 
-    def parse_chat_files(self):
+    def get_chat_history(self):
         chat_history = []
         for chat_file in self.get_chat_files():
             with open(chat_file, 'r') as f:
                 page = f.read()
 
             tree = html.fromstring(page)
-            chat_parsed = self.parse_chat_file(tree)
-            chat_history.extend(chat_parsed)
+            chat_history.extend(self.parse_chat_file(tree))
 
-        print(chat_history)
+        return chat_history
