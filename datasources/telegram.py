@@ -12,7 +12,7 @@ class Telegram:
 
     def get_chat_files(self):
         def get_file_number(file_name):
-            re_number = re.findall(r'messages([0-9]*).html', file_name)[0]
+            re_number = re.findall(r'^messages([0-9]*).html', file_name)[0]
             number = int(re_number) if re_number != '' else 0
 
             return number
@@ -23,21 +23,48 @@ class Telegram:
 
         return chat_files
 
-    @staticmethod
-    def parse_chat_file(tree):
+    def parse_chat_file(self, tree):
         chat_history_root = tree.xpath('/html/body/div[@class="page_wrap"]/div/div[@class="history"]')[0]
 
         last_user = ''
         message_list = []
         for m in chat_history_root.xpath('./div[contains(@class, "message") and not(contains(@class, "service"))]'):
-            if 'joined' in m.xpath('./@class')[0].split():
-                user = last_user
+            # parse html message
+            message = {
+                'id': m.xpath('./@id')[0].replace('message', ''),
+                'user': next(iter(m.xpath('./div[@class="body"]/div[@class="from_name"]/text()')), None),
+                'date': datetime.strptime(m.xpath('./div[@class="body"]/div[contains(@class, "date")]/@title')[0],
+                                          '%d.%m.%Y %H:%M:%S'),
+                'text': next(iter(m.xpath('./div[@class="body"]/div[@class="text"]/text()')), None),
+                'links': [link for link in m.xpath('./div[@class="body"]/div[@class="text"]/a/@href')],
+                'image': next(iter(m.xpath('./div[@class="body"]/div[contains(@class, "media_wrap")]/'
+                                           'a[contains(@class, "photo_wrap")]/@href')), None),
+                'video': next(iter(m.xpath('./div[@class="body"]/div[contains(@class, "media_wrap")]/'
+                                           'a[contains(@class, "media_video")]/@href')), False),
+                'reply': next(iter(m.xpath('./div[@class="body"]/div[contains(@class, "reply_to")]/a/@href')), None),
+            }
+
+            # clean message fields
+            if message['user']:
+                # can also match bots selecting the end
+                message['user'] = re.findall(r'^(.*?)( via @([a-zA-Z0-9_-]+))?$', message['user'].strip())[0][0]
+                last_user = message['user']
             else:
-                user = m.xpath('./div[@class="body"]/div[@class="from_name"]/text()')[0].splitlines()[1]
-                last_user = user
-            date = datetime.strptime(m.xpath('./div[@class="body"]/div[contains(@class, "date")]/@title')[0],
-                                     '%d.%m.%Y %H:%M:%S')
-            message_list.append({'user': user, 'date': date})
+                message['user'] = last_user
+
+            if message['text']:
+                message['text'] = message['text'].strip()
+
+            if message['image']:
+                message['image'] = os.path.join(self.input_telegram_path, message['image'])
+
+            if message['video']:
+                message['Video'] = True
+
+            if message['reply']:
+                message['reply'] = re.findall(r'([0-9]+)$', message['reply'])[0]
+
+            message_list.append(message)
 
         return message_list
 
@@ -48,7 +75,7 @@ class Telegram:
                 page = f.read()
 
             tree = html.fromstring(page)
-            chat_parsed = Telegram.parse_chat_file(tree)
+            chat_parsed = self.parse_chat_file(tree)
             chat_history.extend(chat_parsed)
 
         print(chat_history)
