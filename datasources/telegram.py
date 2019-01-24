@@ -39,6 +39,8 @@ class Telegram:
                                            'a[contains(@class, "photo_wrap")]/@href')), None),
                 'video': next(iter(m.xpath('./div[@class="body"]/div[contains(@class, "media_wrap")]/'
                                            'a[contains(@class, "media_video")]/@href')), False),
+                'audio': next(iter(m.xpath('./div[@class="body"]/div[contains(@class, "media_wrap")]/'
+                                           'a[contains(@class, "media_voice_message")]/@href')), None),
                 'reply': next(iter(m.xpath('./div[@class="body"]/div[contains(@class, "reply_to")]/a/@href')), None),
             }
 
@@ -56,6 +58,9 @@ class Telegram:
 
             if message['image']:
                 message['image'] = os.path.join(self.input_telegram_path, message['image'])
+
+            if message['audio']:
+                message['audio'] = os.path.join(self.input_telegram_path, message['audio'])
 
             if message['video']:
                 message['Video'] = True

@@ -18,6 +18,7 @@ class Whatsapp:
         message_list = []
         with open(chat_file_name, 'r') as chat_file:
             next(chat_file)  # skip first row
+            # TODO: add multiline parsing
             for line in chat_file:
                 message_start = re.search(
                     r'^(?P<date>[0-9]{2}\/[0-9]{2}\/[0-9]{2}, [0-9]{2}:[0-9]{2}) - (?P<user>.*?): (?P<text>.*?)$', line)
