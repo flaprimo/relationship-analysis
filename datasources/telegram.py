@@ -69,9 +69,9 @@ class Telegram:
 
     def get_chat_history(self):
         chat_history = []
-        for chat_file in self.get_chat_files():
-            with open(chat_file, 'r') as f:
-                page = f.read()
+        for chat_file_path in self.get_chat_files():
+            with open(chat_file_path, 'r') as chat_file:
+                page = chat_file.read()
 
             tree = html.fromstring(page)
             chat_history.extend(self.parse_chat_file(tree))

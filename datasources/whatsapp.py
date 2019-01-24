@@ -14,11 +14,11 @@ class Whatsapp:
         return chat_files
 
     @staticmethod
-    def parse_chat_file(chat_file):
+    def parse_chat_file(chat_file_name):
         message_list = []
-        with open(chat_file, 'r') as f:
-            next(f)  # skip first line
-            for line in f:
+        with open(chat_file_name, 'r') as chat_file:
+            next(chat_file)  # skip first row
+            for line in chat_file:
                 message_start = re.search(
                     r'^(?P<date>[0-9]{2}\/[0-9]{2}\/[0-9]{2}, [0-9]{2}:[0-9]{2}) - (?P<user>.*?): (?P<text>.*?)$', line)
 
@@ -26,7 +26,11 @@ class Whatsapp:
                     message = {
                         'date': datetime.strptime(message_start.group('date'), '%d/%m/%y, %H:%M'),
                         'user': message_start.group('user'),
-                        'text': message_start.group('text')
+                        'text': message_start.group('text'),
+                        'media': message_start.group('text') == '<Media omessi>',
+                        'links': [link[0] for link in re.findall(
+                            r'(^(http|https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(([0-9]{1,5})?\/.*)?$)',
+                            message_start.group('text'))]
                     }
                     message_list.append(message)
                 else:
