@@ -16,9 +16,10 @@ class Whatsapp:
     @staticmethod
     def parse_chat_file(chat_file_name):
         message_list = []
+
+        # create messages
         with open(chat_file_name, 'r') as chat_file:
             next(chat_file)  # skip first row
-            # TODO: add multiline parsing
             for line in chat_file:
                 message_start = re.search(
                     r'^(?P<date>[0-9]{2}\/[0-9]{2}\/[0-9]{2}, [0-9]{2}:[0-9]{2}) - (?P<user>.*?): (?P<text>.*?)$', line)
@@ -29,13 +30,19 @@ class Whatsapp:
                         'user': message_start.group('user'),
                         'text': message_start.group('text'),
                         'media': message_start.group('text') == '<Media omessi>',
-                        'links': [link[0] for link in re.findall(
-                            r'(^(http|https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(([0-9]{1,5})?\/.*)?$)',
-                            message_start.group('text'))]
                     }
                     message_list.append(message)
                 else:
                     message_list[-1]['text'] = message_list[-1]['text'] + ' ' + line.strip()
+
+        # analyze messages
+        for message in message_list:
+            message['text'] = message['text'].replace('<Media omessi>', '')
+            message['links'] = [link[0] for link in re.findall(
+                r'(^(http|https):\/\/[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(([0-9]{1,5})?\/.*)?$)',
+                message['text'])]
+            for link in message['links']:
+                message['text'] = message['text'].replace(link, '')
 
         return message_list
 
