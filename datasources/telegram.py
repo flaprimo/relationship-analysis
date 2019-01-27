@@ -21,48 +21,38 @@ class Telegram:
 
         return chat_files
 
-    def parse_chat_file(self, tree):
+    @staticmethod
+    def parse_chat_file(tree):
         chat_history_root = tree.xpath('/html/body/div[@class="page_wrap"]/div/div[@class="history"]')[0]
 
-        last_user = ''
         message_list = []
         for m in chat_history_root.xpath('./div[contains(@class, "message") and not(contains(@class, "service"))]'):
+            m_body = m.xpath('./div[@class="body"]')[0]
+            m_media_xpath = './div[contains(@class, "media_wrap")]/a[contains(@class, "{0}")]'
+
             # parse html message
             message = {
                 'id': m.xpath('./@id')[0].replace('message', ''),
-                'user': next(iter(m.xpath('./div[@class="body"]/div[@class="from_name"]/text()')), None),
-                'date': datetime.strptime(m.xpath('./div[@class="body"]/div[contains(@class, "date")]/@title')[0],
+                'user': re.search(r'^(?P<user>.*?)( via @(?P<bot>[a-zA-Z0-9_-]+))?$',
+                                  m_body.xpath('./div[@class="from_name"]/text()')[0]
+                                  .strip()).group('user')
+                if len(m_body.xpath('./div[@class="from_name"]')) > 0
+                else message_list[-1]['user'],
+                'date': datetime.strptime(m_body.xpath('./div[contains(@class, "date")]/@title')[0],
                                           '%d.%m.%Y %H:%M:%S'),
-                'text': next(iter(m.xpath('./div[@class="body"]/div[@class="text"]/text()')), '').strip(),
-                'links': [link for link in m.xpath('./div[@class="body"]/div[@class="text"]/a/@href')],
-                'image': next(iter(m.xpath('./div[@class="body"]/div[contains(@class, "media_wrap")]/'
-                                           'a[contains(@class, "photo_wrap")]/@href')), None),
-                # TODO: check support for video
-                'video': len(m.xpath('./div[@class="body"]/div[contains(@class, "media_wrap")]/'
-                                     'a[contains(@class, "media_video")]/@href')) > 0,
-                'audio': next(iter(m.xpath('./div[@class="body"]/div[contains(@class, "media_wrap")]/'
-                                           'a[contains(@class, "media_voice_message")]/@href')), None),
-                'reply': next(iter(m.xpath('./div[@class="body"]/div[contains(@class, "reply_to")]/a/@href')), None),
+                'text': next(iter(m_body.xpath('./div[@class="text"]/text()')), '').strip(),
+                'links': [link for link in m_body.xpath('./div[@class="text"]/a/@href')],
+                'video': len(m_body.xpath(m_media_xpath.format('media_video'))) > 0,
+                'image': next(iter(m_body.xpath(m_media_xpath.format('photo_wrap') + '/@href')), None),
+                'audio': next(iter(m_body.xpath(m_media_xpath.format('media_voice_message') + '/@href')), None),
+                'location': tuple(
+                    re.findall(r'([0-9]+\.[0-9]+)',
+                               m_body.xpath(m_media_xpath.format('media_location') +
+                                            '/div[@class="body"]/div[contains(@class, "details")]/text()')[0]))
+                if len(m_body.xpath(m_media_xpath.format('media_location'))) > 0 else None,
+                'reply': re.search(r'([0-9]+)$', m_body.xpath('./div[contains(@class, "reply_to")]/a/@href')[0])[0]
+                if len(m_body.xpath('./div[contains(@class, "reply_to")]')) > 0 else None
             }
-
-            # clean message fields
-            # TODO: use regex with xpath 2
-            if message['user']:
-                # can also match bots selecting the end
-                message['user'] = re.search(
-                    r'^(?P<user>.*?)( via @(?P<bot>[a-zA-Z0-9_-]+))?$', message['user'].strip()).group('user')
-                last_user = message['user']
-            else:
-                message['user'] = last_user
-
-            if message['image']:
-                message['image'] = os.path.join(self.input_telegram_path, message['image'])
-
-            if message['audio']:
-                message['audio'] = os.path.join(self.input_telegram_path, message['audio'])
-
-            if message['reply']:
-                message['reply'] = re.findall(r'([0-9]+)$', message['reply'])[0]
 
             message_list.append(message)
 
