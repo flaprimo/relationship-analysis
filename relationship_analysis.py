@@ -1,17 +1,15 @@
 import os
-from datasources.telegram import Telegram
-from datasources.whatsapp import Whatsapp
-from datasources.calls import Calls
+from pipelines.orchestrator import Orchestrator
 
 PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
 INPUT_PATH = os.path.join(PROJECT_PATH, 'input/')
 OUTPUT_PATH = os.path.join(PROJECT_PATH, 'output/')
+PROJECT_NAME = 'fp'
 
 
 def main():
-    print(Telegram(INPUT_PATH).get_chat_history())
-    print(Whatsapp(INPUT_PATH).get_chat_history())
-    print(Calls(INPUT_PATH).get_calls_history())
+    o = Orchestrator(PROJECT_NAME, INPUT_PATH, OUTPUT_PATH)
+    o.execute()
 
 
 if __name__ == "__main__":
