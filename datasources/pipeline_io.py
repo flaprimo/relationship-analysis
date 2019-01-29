@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 import logging
-import helper
+from pipelines import helper
 
 logger = logging.getLogger(__name__)
 
