@@ -13,9 +13,8 @@ logger = logging.getLogger(__name__)
 class Orchestrator:
     def __init__(self, project_name, input_path, output_path):
         self.project_name = project_name
-        self.project_input_path = os.path.join(input_path, project_name + '/')
-        self.project_output_path = os.path.join(output_path, project_name + '/')
-
+        self.project_input_path = os.path.join(input_path, project_name)
+        self.project_output_path = os.path.join(output_path, project_name)
         self.datasources = Datasources(self.project_input_path)
 
         logger.info(f'INIT orchestrator')

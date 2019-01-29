@@ -8,7 +8,7 @@ class ConfigBase:
 
         self.base_dir = {
             'input': project_input_path,
-            'output': os.path.join(project_output_path, pipeline_name + '/')
+            'output': os.path.join(project_output_path, pipeline_name)
         }
 
         self.postfix = ''
