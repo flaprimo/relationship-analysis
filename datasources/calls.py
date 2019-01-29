@@ -29,7 +29,7 @@ class Calls:
         next(calls_csv)  # skip first row
         for row in calls_csv:
             call = {
-                'name': row[0] if row[5] == 'Outgoing' else 'Flavio Primo',
+                'user': row[0] if row[5] == 'Outgoing' else 'Flavio Primo',
                 'date': parse_dates(row[2]),
                 'duration': timedelta(seconds=int(row[4]))
             }
