@@ -1,5 +1,5 @@
 import os
-from pipelines.orchestrator import Orchestrator
+from pipelines import Orchestrator
 
 PROJECT_PATH = os.path.dirname(os.path.realpath(__file__))
 INPUT_PATH = os.path.join(PROJECT_PATH, 'input/')
