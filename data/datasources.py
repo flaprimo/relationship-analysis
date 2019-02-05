@@ -1,7 +1,7 @@
-from data.files import Files
-from data.calls import Calls
-from data.telegram import Telegram
-from data.whatsapp import Whatsapp
+from .files import Files
+from .calls import Calls
+from .telegram import Telegram
+from .whatsapp import Whatsapp
 
 
 class Datasources:

@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import json
 import logging
-from data.files.model import file_models
+from .model import file_models
 
 logger = logging.getLogger(__name__)
 
